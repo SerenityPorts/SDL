@@ -416,6 +416,13 @@ extern VideoBootStrap PSP_bootstrap;
 extern VideoBootStrap RPI_bootstrap;
 extern VideoBootStrap KMSDRM_bootstrap;
 extern VideoBootStrap DUMMY_bootstrap;
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern VideoBootStrap SERENITY_bootstrap;
+#ifdef __cplusplus
+}
+#endif
 extern VideoBootStrap Wayland_bootstrap;
 extern VideoBootStrap NACL_bootstrap;
 extern VideoBootStrap VIVANTE_bootstrap;

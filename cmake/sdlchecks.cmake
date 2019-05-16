@@ -739,6 +739,20 @@ macro(CheckVivante)
 endmacro(CheckVivante)
 
 # Requires:
+# - n/a
+macro(CheckSerenity)
+  message_warn("Enabling serenity!")
+  ### FIXME do this properly
+  set(HAVE_VIDEO_SERENITY TRUE)
+  set(HAVE_SDL_VIDEO TRUE)
+
+  file(GLOB SERENITY_SOURCES ${SDL2_SOURCE_DIR}/src/video/serenity/*.cpp)
+  set(SOURCE_FILES ${SOURCE_FILES} ${SERENITY_SOURCES})
+  set(SDL_VIDEO_DRIVER_SERENITY 1)
+  list(APPEND EXTRA_LIBS gui core)
+endmacro(CheckSerenity)
+
+# Requires:
 # - nada
 macro(CheckOpenGLX11)
   if(VIDEO_OPENGL)

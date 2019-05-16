@@ -56,6 +56,7 @@ SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
 {
     va_list ap;
     SDL_error *error;
+    char errmsg[SDL_ERRBUFIZE];
 
     /* Ignore call if invalid format pointer was passed */
     if (fmt == NULL) return -1;
@@ -122,14 +123,16 @@ SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
     }
     va_end(ap);
 
+    // #### SERENITY: HACK: show everything that's going on
+    SDL_GetErrorMsg(errmsg, sizeof(errmsg));
+    dbgprintf("%s", errmsg);
+
     if (SDL_LogGetPriority(SDL_LOG_CATEGORY_ERROR) <= SDL_LOG_PRIORITY_DEBUG) {
         /* If we are in debug mode, print out an error message
          * Avoid stomping on the static buffer in GetError, just
          * in case this is called while processing a ShowMessageBox to
          * show an error already in that static buffer.
          */
-        char errmsg[SDL_ERRBUFIZE];
-        SDL_GetErrorMsg(errmsg, sizeof(errmsg));
         SDL_LogDebug(SDL_LOG_CATEGORY_ERROR, "%s", errmsg);
     }
     return -1;
