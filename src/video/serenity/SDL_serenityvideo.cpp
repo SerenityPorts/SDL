@@ -159,7 +159,7 @@ class SerenitySDLWidget final : public GWidget
 {
 public:
     SerenitySDLWidget(SDL_Window *window, GWidget *parent = nullptr);
-    RetainPtr<GraphicsBitmap> m_buffer;
+    RefPtr<GraphicsBitmap> m_buffer;
 protected:
     void paint_event(GPaintEvent&) override;
     void resize_event(GResizeEvent&) override;
