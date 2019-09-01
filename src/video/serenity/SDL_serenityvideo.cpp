@@ -272,7 +272,6 @@ int Serenity_CreateWindow(_THIS, SDL_Window *window)
 {
     auto w = new SerenityPlatformWindow(window);
     window->driverdata = w;
-    w->m_window.set_should_exit_event_loop_on_close(false);
     w->m_window.set_double_buffering_enabled(false);
     w->m_widget.set_fill_with_background_color(false);
     w->m_window.set_main_widget(&w->m_widget);
