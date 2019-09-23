@@ -155,8 +155,8 @@ SERENITY_VideoQuit(_THIS)
     delete gapp;
 }
 
-class SerenitySDLWidget final : public GWidget
-{
+class SerenitySDLWidget final : public GWidget {
+    C_OBJECT(SerenitySDLWidget)
 public:
     SerenitySDLWidget(SDL_Window *window, GWidget *parent = nullptr);
     RefPtr<GraphicsBitmap> m_buffer;
@@ -226,8 +226,8 @@ static int mapButton(GMouseButton button)
         return SDL_BUTTON_RIGHT;
     }
 
-    ASSERT(false);
     ASSERT_NOT_REACHED();
+    return 0;
 }
 
 void SerenitySDLWidget::mousedown_event(GMouseEvent& event)
@@ -260,22 +260,22 @@ void SerenitySDLWidget::leave_event(CEvent&)
 struct SerenityPlatformWindow
 {
     SerenityPlatformWindow(SDL_Window *sdl_window)
-        : m_widget(sdl_window, nullptr)
+        : m_widget(SerenitySDLWidget::construct(sdl_window, nullptr))
     {
     }
 
-    GWindow m_window;
-    SerenitySDLWidget m_widget;
+    RefPtr<GWindow> m_window;
+    NonnullRefPtr<SerenitySDLWidget> m_widget;
 };
 
 int Serenity_CreateWindow(_THIS, SDL_Window *window)
 {
     auto w = new SerenityPlatformWindow(window);
     window->driverdata = w;
-    w->m_window.set_double_buffering_enabled(false);
-    w->m_widget.set_fill_with_background_color(false);
-    w->m_window.set_main_widget(&w->m_widget);
-    w->m_window.resize(window->w, window->h);
+    w->m_window->set_double_buffering_enabled(false);
+    w->m_widget->set_fill_with_background_color(false);
+    w->m_window->set_main_widget(w->m_widget);
+    w->m_window->resize(window->w, window->h);
     SERENITY_PumpEvents(_this);
 
     return 0;
@@ -283,25 +283,25 @@ int Serenity_CreateWindow(_THIS, SDL_Window *window)
 
 void Serenity_ShowWindow(_THIS, SDL_Window *window)
 {
-    static_cast<SerenityPlatformWindow*>(window->driverdata)->m_window.show();
+    static_cast<SerenityPlatformWindow*>(window->driverdata)->m_window->show();
 }
 
 void Serenity_HideWindow(_THIS, SDL_Window *window)
 {
-    static_cast<SerenityPlatformWindow*>(window->driverdata)->m_window.hide();
+    static_cast<SerenityPlatformWindow*>(window->driverdata)->m_window->hide();
 }
 
 void Serenity_SetWindowTitle(_THIS, SDL_Window *window)
 {
     auto win = static_cast<SerenityPlatformWindow*>(window->driverdata);
-    win->m_window.set_title(window->title);
+    win->m_window->set_title(window->title);
 }
 
 void
 Serenity_SetWindowSize(_THIS, SDL_Window * window)
 {
     auto win = static_cast<SerenityPlatformWindow*>(window->driverdata);
-    win->m_window.resize(window->w, window->h);
+    win->m_window->resize(window->w, window->h);
 }
 
 void Serenity_SetWindowFullscreen(_THIS, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
@@ -319,10 +319,10 @@ int Serenity_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format
 {
     auto win = static_cast<SerenityPlatformWindow*>(window->driverdata);
     *format = SDL_PIXELFORMAT_RGB888;
-    win->m_widget.m_buffer = GraphicsBitmap::create(GraphicsBitmap::Format::RGB32, Size(win->m_widget.width(), win->m_widget.height()));
-    *pitch = win->m_widget.m_buffer->pitch();
-    *pixels = win->m_widget.m_buffer->bits(0);
-    dbgprintf("Created framebuffer %dx%d\n", win->m_widget.width(), win->m_widget.height());
+    win->m_widget->m_buffer = GraphicsBitmap::create(GraphicsBitmap::Format::RGB32, Size(win->m_widget->width(), win->m_widget->height()));
+    *pitch = win->m_widget->m_buffer->pitch();
+    *pixels = win->m_widget->m_buffer->bits(0);
+    dbgprintf("Created framebuffer %dx%d\n", win->m_widget->width(), win->m_widget->height());
     return 0;
 }
 
@@ -330,7 +330,7 @@ int Serenity_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect 
 {
     auto win = static_cast<SerenityPlatformWindow*>(window->driverdata);
     for (int i = 0; i < numrects; i++) {
-        win->m_widget.update(Rect(rects[i].x, rects[i].y, rects[i].w, rects[i].h));
+        win->m_widget->update(Rect(rects[i].x, rects[i].y, rects[i].w, rects[i].h));
     }
     SERENITY_PumpEvents(_this);
 
@@ -340,7 +340,7 @@ int Serenity_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect 
 void Serenity_DestroyWindowFramebuffer(_THIS, SDL_Window * window)
 {
     auto win = static_cast<SerenityPlatformWindow*>(window->driverdata);
-    dbgprintf("DESTROY framebuffer %dx%d\n", win->m_widget.width(), win->m_widget.height());
+    dbgprintf("DESTROY framebuffer %dx%d\n", win->m_widget->width(), win->m_widget->height());
 }
 
 #endif /* SDL_VIDEO_DRIVER_SERENITY */
