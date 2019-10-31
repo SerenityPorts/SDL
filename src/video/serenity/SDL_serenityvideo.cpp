@@ -260,7 +260,8 @@ void SerenitySDLWidget::leave_event(CEvent&)
 struct SerenityPlatformWindow
 {
     SerenityPlatformWindow(SDL_Window *sdl_window)
-        : m_widget(SerenitySDLWidget::construct(sdl_window, nullptr))
+        : m_window(GWindow::construct())
+        , m_widget(SerenitySDLWidget::construct(sdl_window, nullptr))
     {
     }
 
