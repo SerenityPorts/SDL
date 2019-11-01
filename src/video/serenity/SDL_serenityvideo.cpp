@@ -41,6 +41,116 @@ extern "C" {
 #include <LibGUI/GPainter.h>
 #include <LibCore/CEventLoop.h>
 
+static int conversion_map[] = {
+    SDLK_UNKNOWN,
+    SDLK_ESCAPE,
+    SDLK_TAB,
+    SDLK_BACKSPACE,
+    SDLK_RETURN,
+    SDLK_INSERT,
+    SDLK_DELETE,
+    SDLK_PRINTSCREEN,
+    SDLK_SYSREQ,
+    SDLK_HOME,
+    SDLK_END,
+    SDLK_LEFT,
+    SDLK_UP,
+    SDLK_RIGHT,
+    SDLK_DOWN,
+    SDLK_PAGEUP,
+    SDLK_PAGEDOWN,
+    SDLK_LSHIFT,
+    SDLK_RSHIFT,
+    SDLK_LCTRL,
+    SDLK_LALT,
+    SDLK_CAPSLOCK,
+    SDLK_NUMLOCKCLEAR,
+    SDLK_SCROLLLOCK,
+    SDLK_F1,
+    SDLK_F2,
+    SDLK_F3,
+    SDLK_F4,
+    SDLK_F5,
+    SDLK_F6,
+    SDLK_F7,
+    SDLK_F8,
+    SDLK_F9,
+    SDLK_F10,
+    SDLK_F11,
+    SDLK_F12,
+    SDLK_SPACE,
+    SDLK_EXCLAIM,
+    SDLK_QUOTEDBL,
+    SDLK_HASH,
+    SDLK_DOLLAR,
+    SDLK_PERCENT,
+    SDLK_AMPERSAND,
+    SDLK_QUOTE,
+    SDLK_LEFTPAREN,
+    SDLK_RIGHTPAREN,
+    SDLK_ASTERISK,
+    SDLK_PLUS,
+    SDLK_COMMA,
+    SDLK_MINUS,
+    SDLK_PERIOD,
+    SDLK_SLASH,
+    SDLK_0,
+    SDLK_1,
+    SDLK_2,
+    SDLK_3,
+    SDLK_4,
+    SDLK_5,
+    SDLK_6,
+    SDLK_7,
+    SDLK_8,
+    SDLK_9,
+    SDLK_COLON,
+    SDLK_SEMICOLON,
+    SDLK_LESS,
+    SDLK_EQUALS,
+    SDLK_GREATER,
+    SDLK_QUESTION,
+    SDLK_AT,
+    SDLK_a,
+    SDLK_b,
+    SDLK_c,
+    SDLK_d,
+    SDLK_e,
+    SDLK_f,
+    SDLK_g,
+    SDLK_h,
+    SDLK_i,
+    SDLK_j,
+    SDLK_k,
+    SDLK_l,
+    SDLK_m,
+    SDLK_n,
+    SDLK_o,
+    SDLK_p,
+    SDLK_q,
+    SDLK_r,
+    SDLK_s,
+    SDLK_t,
+    SDLK_u,
+    SDLK_v,
+    SDLK_w,
+    SDLK_x,
+    SDLK_y,
+    SDLK_z,
+    SDLK_LEFTBRACKET,
+    SDLK_RIGHTBRACKET,
+    SDLK_BACKSLASH,
+    SDLK_UNKNOWN,
+    SDLK_UNDERSCORE,
+    SDLK_KP_LEFTBRACE,
+    SDLK_KP_RIGHTBRACE,
+    SDLK_KP_VERTICALBAR,
+    SDLK_BACKQUOTE,
+    SDLK_BACKQUOTE,
+    SDLK_UNKNOWN,
+
+};
+
 /* Initialization/Query functions */
 static int SERENITY_VideoInit(_THIS);
 static int SERENITY_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
@@ -170,6 +280,9 @@ protected:
     void mousemove_event(GMouseEvent&) override;
     void mouseup_event(GMouseEvent&) override;
 
+    void keydown_event(GKeyEvent& event) override;
+    void keyup_event(GKeyEvent& event) override;
+
     void enter_event(CEvent&) override;
     void leave_event(CEvent&) override;
 
@@ -245,6 +358,26 @@ void SerenitySDLWidget::mouseup_event(GMouseEvent& event)
 {
     SDL_SendMouseMotion(m_sdl_window, 0, 0, event.x(), event.y());
     SDL_SendMouseButton(m_sdl_window, 0, SDL_RELEASED, mapButton(event.button()));
+}
+
+void SerenitySDLWidget::keydown_event(GKeyEvent& event)
+{
+    SDL_Event sdl_event;
+
+    sdl_event.type = SDL_KEYDOWN;
+    sdl_event.key.state = SDL_PRESSED;
+    sdl_event.key.keysym.sym = conversion_map[event.key()];
+    SDL_PushEvent(&sdl_event);
+}
+
+void SerenitySDLWidget::keyup_event(GKeyEvent& event)
+{
+    SDL_Event sdl_event;
+
+    sdl_event.type = SDL_KEYUP;
+    sdl_event.key.state = SDL_RELEASED;  
+    sdl_event.key.keysym.sym = conversion_map[event.key()];
+    SDL_PushEvent(&sdl_event);
 }
 
 void SerenitySDLWidget::enter_event(CEvent&)
