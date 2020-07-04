@@ -436,7 +436,7 @@ void SerenitySDLWidget::paint_event(GUI::PaintEvent& event)
     // event.rect().height());
     GUI::Painter painter(*this);
     painter.add_clip_rect(event.rect());
-    painter.blit(Gfx::Point(0, 0), *m_buffer, event.rect());
+    painter.blit(Gfx::IntPoint(0, 0), *m_buffer, event.rect());
 }
 void SerenitySDLWidget::resize_event(GUI::ResizeEvent&)
 {
@@ -585,7 +585,7 @@ int Serenity_CreateWindowFramebuffer(_THIS, SDL_Window* window, Uint32* format,
     *format = SDL_PIXELFORMAT_RGB888;
     win->m_widget->m_buffer = Gfx::Bitmap::create(
         Gfx::BitmapFormat::RGB32,
-        Gfx::Size(win->m_widget->width(), win->m_widget->height()));
+        Gfx::IntSize(win->m_widget->width(), win->m_widget->height()));
     *pitch = win->m_widget->m_buffer->pitch();
     *pixels = win->m_widget->m_buffer->bits(0);
     dbgprintf("Created framebuffer %dx%d\n", win->m_widget->width(),
@@ -598,7 +598,7 @@ int Serenity_UpdateWindowFramebuffer(_THIS, SDL_Window* window,
 {
     auto win = static_cast<SerenityPlatformWindow*>(window->driverdata);
     for (int i = 0; i < numrects; i++) {
-        win->m_widget->update(Gfx::Rect(rects[i].x, rects[i].y, rects[i].w, rects[i].h));
+        win->m_widget->update(Gfx::IntRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h));
     }
     SERENITY_PumpEvents(_this);
 
