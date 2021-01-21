@@ -585,7 +585,7 @@ int Serenity_CreateWindowFramebuffer(_THIS, SDL_Window* window, Uint32* format,
     *format = SDL_PIXELFORMAT_RGB888;
     win->m_widget->m_buffer = Gfx::Bitmap::create(
         Gfx::BitmapFormat::RGB32,
-        Gfx::IntSize(win->m_widget->width(), win->m_widget->height()));
+        Gfx::IntSize(win->m_widget->width(), win->m_widget->height()), 1);
     *pitch = win->m_widget->m_buffer->pitch();
     *pixels = win->m_widget->m_buffer->scanline(0);
     dbgprintf("Created framebuffer %dx%d\n", win->m_widget->width(),
