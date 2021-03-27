@@ -1403,6 +1403,9 @@ case $os in
 	os400*)
 		os=os400
 		;;
+	serenity*)
+		os=serenity
+                ;;
 	sunos5*)
 		os=`echo "$os" | sed -e 's|sunos5|solaris2|'`
 		;;
