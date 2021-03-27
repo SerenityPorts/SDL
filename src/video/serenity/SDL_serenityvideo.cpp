@@ -486,6 +486,9 @@ void SerenitySDLWidget::mouseup_event(GUI::MouseEvent& event)
 void SerenitySDLWidget::keydown_event(GUI::KeyEvent& event)
 {
     SDL_SendKeyboardKey(SDL_PRESSED, scancode_map[event.key()]);
+    auto text = event.text();
+    if (!text.is_empty())
+        SDL_SendKeyboardText(text.characters());
 }
 
 void SerenitySDLWidget::keyup_event(GUI::KeyEvent& event)
