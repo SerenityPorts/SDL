@@ -33,6 +33,7 @@ SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
     /* Ignore call if invalid format pointer was passed */
     if (fmt != NULL) {
         va_list ap;
+        char errmsg[SDL_ERRBUFIZE];
         SDL_error *error = SDL_GetErrBuf();
 
         error->error = 1;  /* mark error as valid */
@@ -41,10 +42,10 @@ SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
         SDL_vsnprintf(error->str, ERR_MAX_STRLEN, fmt, ap);
         va_end(ap);
 
-        if (SDL_LogGetPriority(SDL_LOG_CATEGORY_ERROR) <= SDL_LOG_PRIORITY_DEBUG) {
-            /* If we are in debug mode, print out the error message */
-            SDL_LogDebug(SDL_LOG_CATEGORY_ERROR, "%s", error->str);
-        }
+        // # HACK(SerenityOS): show everything that's going on
+        SDL_GetErrorMsg(errmsg, sizeof(errmsg));
+        dbgputstr(errmsg, strlen(errmsg));
+        dbgputstr("\n", 1);
     }
 
     return -1;

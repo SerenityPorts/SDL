@@ -1,9 +1,8 @@
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-  message(FATAL_ERROR "Prevented in-tree built. Please create a build directory outside of the SDL source code and call cmake from there")
-endif()
-
 cmake_minimum_required(VERSION 3.0.0)
 project(SDL2 C CXX)
+
+set(UNIX 1)
+set(VIDEO_WAYLAND off)
 
 if(WINDOWS_STORE)
   enable_language(CXX)
@@ -357,7 +356,7 @@ set_option(VIDEO_DUMMY         "Use dummy video driver" ON)
 set_option(VIDEO_OPENGL        "Include OpenGL support" ON)
 set_option(VIDEO_OPENGLES      "Include OpenGL ES support" ON)
 set_option(PTHREADS            "Use POSIX threads for multi-threading" ${SDL_PTHREADS_ENABLED_BY_DEFAULT})
-dep_option(PTHREADS_SEM        "Use pthread semaphores" ON "PTHREADS" OFF)
+dep_option(PTHREADS_SEM        "Use pthread semaphores" OFF "PTHREADS" OFF)
 set_option(SDL_DLOPEN          "Use dlopen for shared object loading" ${SDL_DLOPEN_ENABLED_BY_DEFAULT})
 dep_option(OSS                 "Support the OSS audio API" ON "UNIX_SYS OR RISCOS" OFF)
 set_option(ALSA                "Support the ALSA audio API" ${UNIX_SYS})
@@ -1185,20 +1184,7 @@ elseif(UNIX AND NOT APPLE AND NOT ANDROID AND NOT RISCOS)
     CheckLibSampleRate()
   endif()
 
-  if(SDL_VIDEO)
-    # Need to check for Raspberry PI first and add platform specific compiler flags, otherwise the test for GLES fails!
-    CheckRPI()
-    CheckX11()
-    CheckDirectFB()
-    CheckOpenGLX11()
-    CheckOpenGLESX11()
-    CheckWayland()
-    CheckVivante()
-    # Need to check EGL before checking KMSDRM because KMSDRM depends on it.
-    CheckEGLKMSDRM()
-    CheckKMSDRM()
-    CheckOpenGLKMSDRM()
-  endif()
+  CheckSerenity()
 
   if(UNIX)
     file(GLOB CORE_UNIX_SOURCES ${SDL2_SOURCE_DIR}/src/core/unix/*.c)
