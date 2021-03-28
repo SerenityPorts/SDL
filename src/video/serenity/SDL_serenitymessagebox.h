@@ -20,11 +20,19 @@
 */
 #include "../../SDL_internal.h"
 
-#ifndef SDL_serenityvideo_h_
-#define SDL_serenityvideo_h_
+#ifndef SDL_serenitymessagebox_h_
+#define SDL_serenitymessagebox_h_
 
-#include "../SDL_sysvideo.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* SDL_serenityvideo_h_ */
+int SERENITY_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SDL_serenitymessagebox_h_ */
 
 /* vi: set ts=4 sw=4 expandtab: */
