@@ -17,14 +17,23 @@
   2. Altered source versions must be plainly marked as such, and must not be
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
-*/
+  */
+
 #include "../../SDL_internal.h"
 
-#ifndef SDL_serenityvideo_h_
-#define SDL_serenityvideo_h_
+#if SDL_VIDEO_DRIVER_SERENITY
 
-#include "../SDL_sysvideo.h"
+#    include "SDL_messagebox.h"
+#    include "SDL_serenitymessagebox.h"
 
-#endif /* SDL_serenityvideo_h_ */
+#    include <LibGUI/MessageBox.h>
+
+extern "C" int SERENITY_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
+{
+    GUI::MessageBox::show(nullptr, messageboxdata->message, messageboxdata->title);
+    return 0;
+}
+
+#endif /* SDL_VIDEO_DRIVER_SERENITY */
 
 /* vi: set ts=4 sw=4 expandtab: */
