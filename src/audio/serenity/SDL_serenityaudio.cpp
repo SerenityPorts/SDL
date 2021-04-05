@@ -69,7 +69,7 @@ static int SERENITYAUDIO_OpenDevice(_THIS, void*, const char*, int iscapture)
     that->spec.freq = 44100;
     that->spec.format = AUDIO_S16LSB;
     that->spec.channels = 2;
-    that->spec.samples = 1000;
+    that->spec.samples = 1024;
 
     /* Calculate the final parameters for this audio specification */
     SDL_CalculateAudioSpec(&that->spec);
