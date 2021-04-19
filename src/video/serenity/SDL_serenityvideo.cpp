@@ -432,7 +432,7 @@ void SerenitySDLWidget::paint_event(GUI::PaintEvent& event)
     }
     GUI::Painter painter(*this);
     painter.add_clip_rect(event.rect());
-    painter.blit(Gfx::IntPoint(0, 0), *m_buffer, event.rect());
+    painter.blit(event.rect().location(), *m_buffer, event.rect());
 }
 void SerenitySDLWidget::resize_event(GUI::ResizeEvent&)
 {
