@@ -36,6 +36,7 @@ extern "C" {
 #    include "SDL_serenitymouse.h"
 #    include "SDL_serenityvideo.h"
 
+#    include <dlfcn.h>
 #    include <LibCore/EventLoop.h>
 #    include <LibGUI/Application.h>
 #    include <LibGUI/Painter.h>
@@ -294,6 +295,10 @@ extern int Serenity_UpdateWindowFramebuffer(_THIS, SDL_Window* window,
     const SDL_Rect* rects,
     int numrects);
 extern void Serenity_DestroyWindowFramebuffer(_THIS, SDL_Window* window);
+extern SDL_GLContext Serenity_GL_CreateContext(_THIS, SDL_Window* window);
+extern int Serenity_GL_LoadLibrary(_THIS, const char* path);
+extern void* Serenity_GL_GetProcAddress(_THIS, const char* proc);
+extern int Serenity_GL_SwapWindow(_THIS, SDL_Window* window);
 
 static SDL_VideoDevice* SERENITY_CreateDevice(int devindex)
 {
@@ -325,7 +330,14 @@ static SDL_VideoDevice* SERENITY_CreateDevice(int devindex)
     device->SetWindowFullscreen = Serenity_SetWindowFullscreen;
     device->DestroyWindow = Serenity_DestroyWindow;
 
+    device->GL_CreateContext = Serenity_GL_CreateContext;
+    device->GL_LoadLibrary = Serenity_GL_LoadLibrary;
+    device->GL_GetProcAddress = Serenity_GL_GetProcAddress;
+    device->GL_SwapWindow = Serenity_GL_SwapWindow;
+
     device->free = SERENITY_DeleteDevice;
+
+    Serenity_GL_LoadLibrary(device, nullptr);
 
     return device;
 }
@@ -567,6 +579,56 @@ void Serenity_DestroyWindowFramebuffer(_THIS, SDL_Window* window)
 {
     auto win = SerenityPlatformWindow::from_sdl_window(window);
     dbgln("DESTROY framebuffer {}x{}", win->widget()->width(), win->widget()->height());
+}
+
+SDL_GLContext Serenity_GL_CreateContext(_THIS, SDL_Window* window)
+{
+    auto win = SerenityPlatformWindow::from_sdl_window(window);
+
+    Uint32 format;
+    void* pixels;
+    int pitch;
+    Serenity_CreateWindowFramebuffer(_this, window, &format, &pixels, &pitch);
+
+    win->widget()->m_gl_context = GL::create_context(*win->widget()->m_buffer);
+    GL::make_context_current(win->widget()->m_gl_context);
+    return win->widget()->m_gl_context.ptr();
+}
+
+int Serenity_GL_LoadLibrary(_THIS, const char* path)
+{
+    if (_this->gl_config.driver_loaded) {
+        SDL_SetError("OpenGL library is already loaded");
+        return -1;
+    }
+
+    _this->gl_config.dll_handle = dlopen("libgl.so", RTLD_LAZY | RTLD_LOCAL);
+    if (!_this->gl_config.dll_handle) {
+        dbgln("Could not load OpenGL library: {}", dlerror());
+        _this->gl_config.driver_loaded = SDL_FALSE;
+        return -1;
+    }
+
+    _this->gl_config.driver_loaded = SDL_TRUE;
+    return 0;
+}
+
+void* Serenity_GL_GetProcAddress(_THIS, const char* proc)
+{
+    if (!_this->gl_config.dll_handle) {
+        SDL_SetError("OpenGL library not available");
+        return nullptr;
+    }
+    auto* res = dlsym(_this->gl_config.dll_handle, proc);
+    dbgln("GetProcAddress: {} -> {}", proc, res);
+    return res;
+}
+
+int Serenity_GL_SwapWindow(_THIS, SDL_Window* window)
+{
+    auto win = SerenityPlatformWindow::from_sdl_window(window);
+    win->widget()->update();
+    return 0;
 }
 
 #endif /* SDL_VIDEO_DRIVER_SERENITY */

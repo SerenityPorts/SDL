@@ -25,6 +25,7 @@
 
 #include "../SDL_sysvideo.h"
 
+#include <LibGL/GLContext.h>
 #include <LibGUI/Widget.h>
 #include <LibGUI/Window.h>
 
@@ -33,6 +34,7 @@ class SerenitySDLWidget final : public GUI::Widget {
 public:
     explicit SerenitySDLWidget(SDL_Window*);
     RefPtr<Gfx::Bitmap> m_buffer;
+    OwnPtr<GL::GLContext> m_gl_context;
 
 protected:
     void paint_event(GUI::PaintEvent&) override;
