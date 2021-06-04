@@ -38,11 +38,11 @@ extern "C" {
 
 #    include <dlfcn.h>
 #    include <LibCore/EventLoop.h>
+#    include <LibGfx/Bitmap.h>
 #    include <LibGUI/Application.h>
 #    include <LibGUI/Painter.h>
 #    include <LibGUI/Widget.h>
 #    include <LibGUI/Window.h>
-#    include <LibGfx/Bitmap.h>
 
 static int conversion_map[] = {
     SDLK_UNKNOWN,
@@ -287,6 +287,7 @@ extern void Serenity_SetWindowSize(_THIS, SDL_Window* window);
 extern void Serenity_SetWindowFullscreen(_THIS, SDL_Window* window,
     SDL_VideoDisplay* display,
     SDL_bool fullscreen);
+extern void Serenity_SetWindowIcon(_THIS, SDL_Window* window, SDL_Surface* icon);
 extern void Serenity_DestroyWindow(_THIS, SDL_Window* window);
 extern int Serenity_CreateWindowFramebuffer(_THIS, SDL_Window* window,
     Uint32* format, void** pixels,
@@ -328,6 +329,7 @@ static SDL_VideoDevice* SERENITY_CreateDevice(int devindex)
     device->SetWindowTitle = Serenity_SetWindowTitle;
     device->SetWindowSize = Serenity_SetWindowSize;
     device->SetWindowFullscreen = Serenity_SetWindowFullscreen;
+    device->SetWindowIcon = Serenity_SetWindowIcon;
     device->DestroyWindow = Serenity_DestroyWindow;
 
     device->GL_CreateContext = Serenity_GL_CreateContext;
@@ -539,6 +541,57 @@ void Serenity_SetWindowFullscreen(_THIS, SDL_Window* window,
 {
     dbgln("Attempting to set SDL Window fullscreen to {}", (bool)fullscreen);
     SerenityPlatformWindow::from_sdl_window(window)->window()->set_fullscreen(fullscreen);
+}
+
+static Gfx::Color get_color_from_sdl_pixel(SDL_PixelFormat const& format, u32 pixel)
+{
+    u8 r = ((pixel & format.Rmask) >> format.Rshift) << format.Rloss;
+    u8 g = ((pixel & format.Gmask) >> format.Gshift) << format.Gloss;
+    u8 b = ((pixel & format.Bmask) >> format.Bshift) << format.Bloss;
+    u8 a = ((pixel & format.Amask) >> format.Ashift) << format.Aloss;
+    return {r, g, b, a};
+}
+
+static RefPtr<Gfx::Bitmap> create_bitmap_from_surface(SDL_Surface& icon)
+{
+    auto bitmap = Gfx::Bitmap::create(Gfx::BitmapFormat::BGRA8888, {icon.w, icon.h});
+    if (!bitmap)
+        return {};
+
+    SDL_LockSurface(&icon);
+
+    auto const& pixel_format = *icon.format;
+    auto pixels = static_cast<u32*>(icon.pixels);
+    size_t offset = 0;
+    switch (pixel_format.format) {
+    case SDL_PIXELFORMAT_ARGB8888:
+        for (size_t y = 0; y < icon.h; ++y) {
+            for (size_t x = 0; x < icon.w; ++x) {
+                bitmap->set_pixel({x, y}, get_color_from_sdl_pixel(pixel_format, pixels[offset]));
+                ++offset;
+            }
+        }
+        break;
+    default:
+        warnln("Unable to convert SDL_Surface with format {} to bitmap", SDL_GetPixelFormatName(pixel_format.format));
+    }
+
+    SDL_UnlockSurface(&icon);
+
+    return bitmap;
+}
+
+void Serenity_SetWindowIcon(_THIS, SDL_Window* window, SDL_Surface* icon)
+{
+    auto serenity_window = SerenityPlatformWindow::from_sdl_window(window)->window();
+    if (!icon) {
+        serenity_window->set_icon(nullptr);
+        return;
+    }
+
+    auto icon_bitmap = create_bitmap_from_surface(*icon);
+    if (icon_bitmap)
+        serenity_window->set_icon(icon_bitmap);
 }
 
 void Serenity_DestroyWindow(_THIS, SDL_Window* window)
