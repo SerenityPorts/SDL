@@ -418,14 +418,11 @@ SerenitySDLWidget::SerenitySDLWidget(SDL_Window* window)
 
 void SerenitySDLWidget::paint_event(GUI::PaintEvent& event)
 {
-    VERIFY(size() == m_buffer->size());
-    if (size() != m_buffer->size()) {
-        return; // can't paint this
-    }
     GUI::Painter painter(*this);
     painter.add_clip_rect(event.rect());
     painter.blit(event.rect().location(), *m_buffer, event.rect());
 }
+
 void SerenitySDLWidget::resize_event(GUI::ResizeEvent&)
 {
     SDL_SendWindowEvent(m_sdl_window, SDL_WINDOWEVENT_RESIZED, width(), height());
