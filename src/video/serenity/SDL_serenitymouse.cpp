@@ -21,6 +21,7 @@
 #include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_SERENITY
+#define AK_DONT_REPLACE_STD
 
 /*
  * SDL includes:
