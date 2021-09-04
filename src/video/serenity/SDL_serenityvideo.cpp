@@ -23,6 +23,7 @@ extern "C" {
 #include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_SERENITY
+#    define AK_DONT_REPLACE_STD
 
 #    include "../../events/SDL_events_c.h"
 #    include "../SDL_pixels_c.h"
