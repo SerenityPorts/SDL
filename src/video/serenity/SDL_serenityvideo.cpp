@@ -443,11 +443,11 @@ static int map_button(GUI::MouseButton button)
     case GUI::MouseButton::None:
         VERIFY(false);
         break;
-    case GUI::MouseButton::Left:
+    case GUI::MouseButton::Primary:
         return SDL_BUTTON_LEFT;
     case GUI::MouseButton::Middle:
         return SDL_BUTTON_MIDDLE;
-    case GUI::MouseButton::Right:
+    case GUI::MouseButton::Secondary:
         return SDL_BUTTON_RIGHT;
     }
 
