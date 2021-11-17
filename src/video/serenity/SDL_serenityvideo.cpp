@@ -552,9 +552,10 @@ static Gfx::Color get_color_from_sdl_pixel(SDL_PixelFormat const& format, u32 pi
 
 static RefPtr<Gfx::Bitmap> create_bitmap_from_surface(SDL_Surface& icon)
 {
-    auto bitmap = Gfx::Bitmap::try_create(Gfx::BitmapFormat::BGRA8888, {icon.w, icon.h});
-    if (!bitmap)
+    auto bitmap_or_error = Gfx::Bitmap::try_create(Gfx::BitmapFormat::BGRA8888, {icon.w, icon.h});
+    if (bitmap_or_error.is_error())
         return {};
+    auto bitmap = bitmap_or_error.release_value();
 
     SDL_LockSurface(&icon);
 
@@ -605,9 +606,10 @@ int Serenity_CreateWindowFramebuffer(_THIS, SDL_Window* window, Uint32* format,
     dbgln("SDL2: Creating a new framebuffer of size {}x{}", window->w, window->h);
     auto win = SerenityPlatformWindow::from_sdl_window(window);
     *format = SDL_PIXELFORMAT_RGB888;
-    win->widget()->m_buffer = Gfx::Bitmap::try_create(
-        Gfx::BitmapFormat::BGRx8888,
-        Gfx::IntSize(window->w, window->h));
+    auto bitmap_or_error = Gfx::Bitmap::try_create(Gfx::BitmapFormat::BGRx8888, {window->w, window->h});
+    if (bitmap_or_error.is_error())
+        return SDL_OutOfMemory();
+    win->widget()->m_buffer = bitmap_or_error.release_value();
     *pitch = win->widget()->m_buffer->pitch();
     *pixels = win->widget()->m_buffer->scanline(0);
     dbgln("Created framebuffer {}x{}", win->widget()->width(), win->widget()->height());
