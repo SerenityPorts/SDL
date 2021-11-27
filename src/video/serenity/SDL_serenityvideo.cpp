@@ -655,7 +655,7 @@ int Serenity_GL_LoadLibrary(_THIS, const char* path)
         return -1;
     }
 
-    _this->gl_config.dll_handle = dlopen("libgl.so", RTLD_LAZY | RTLD_LOCAL);
+    _this->gl_config.dll_handle = dlopen("libgl.so.serenity", RTLD_LAZY | RTLD_LOCAL);
     if (!_this->gl_config.dll_handle) {
         dbgln("Could not load OpenGL library: {}", dlerror());
         _this->gl_config.driver_loaded = SDL_FALSE;
