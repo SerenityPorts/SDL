@@ -363,6 +363,7 @@ int SERENITY_VideoInit(_THIS)
 {
     VERIFY(!g_app);
     g_app = GUI::Application::construct(0, nullptr);
+    g_app->set_quit_when_last_window_deleted(false);
     SDL_DisplayMode mode;
 
     dbgln("SDL2: Initialising SDL application");
