@@ -631,8 +631,9 @@ int Serenity_UpdateWindowFramebuffer(_THIS, SDL_Window* window,
 
 void Serenity_DestroyWindowFramebuffer(_THIS, SDL_Window* window)
 {
-    auto win = SerenityPlatformWindow::from_sdl_window(window);
-    dbgln("DESTROY framebuffer {}x{}", win->widget()->width(), win->widget()->height());
+    auto widget = SerenityPlatformWindow::from_sdl_window(window)->widget();
+    dbgln("SDL2: Destroy framebuffer {}", widget->m_buffer->size());
+    widget->m_buffer = nullptr;
 }
 
 SDL_GLContext Serenity_GL_CreateContext(_THIS, SDL_Window* window)
