@@ -298,8 +298,10 @@ extern int Serenity_UpdateWindowFramebuffer(_THIS, SDL_Window* window,
     int numrects);
 extern void Serenity_DestroyWindowFramebuffer(_THIS, SDL_Window* window);
 extern SDL_GLContext Serenity_GL_CreateContext(_THIS, SDL_Window* window);
-extern int Serenity_GL_LoadLibrary(_THIS, const char* path);
+extern void Serenity_GL_DeleteContext(_THIS, SDL_GLContext context);
 extern void* Serenity_GL_GetProcAddress(_THIS, const char* proc);
+extern int Serenity_GL_LoadLibrary(_THIS, const char* path);
+extern int Serenity_GL_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context);
 extern int Serenity_GL_SwapWindow(_THIS, SDL_Window* window);
 
 static SDL_VideoDevice* SERENITY_CreateDevice(int devindex)
@@ -334,8 +336,10 @@ static SDL_VideoDevice* SERENITY_CreateDevice(int devindex)
     device->DestroyWindow = Serenity_DestroyWindow;
 
     device->GL_CreateContext = Serenity_GL_CreateContext;
-    device->GL_LoadLibrary = Serenity_GL_LoadLibrary;
+    device->GL_DeleteContext = Serenity_GL_DeleteContext;
     device->GL_GetProcAddress = Serenity_GL_GetProcAddress;
+    device->GL_LoadLibrary = Serenity_GL_LoadLibrary;
+    device->GL_MakeCurrent = Serenity_GL_MakeCurrent;
     device->GL_SwapWindow = Serenity_GL_SwapWindow;
 
     device->free = SERENITY_DeleteDevice;
@@ -647,7 +651,18 @@ SDL_GLContext Serenity_GL_CreateContext(_THIS, SDL_Window* window)
 
     win->widget()->m_gl_context = GL::create_context(*win->widget()->m_buffer);
     GL::make_context_current(win->widget()->m_gl_context);
-    return win->widget()->m_gl_context.ptr();
+
+    return new SerenityGLContext(*window);
+}
+
+void Serenity_GL_DeleteContext(_THIS, SDL_GLContext context)
+{
+    auto platform_context = static_cast<SerenityGLContext*>(context);
+    auto sdl_window = platform_context->sdl_window();
+    auto platform_window = SerenityPlatformWindow::from_sdl_window(&sdl_window);
+
+    platform_window->widget()->m_gl_context = nullptr;
+    delete platform_context;
 }
 
 int Serenity_GL_LoadLibrary(_THIS, const char* path)
@@ -677,6 +692,16 @@ void* Serenity_GL_GetProcAddress(_THIS, const char* proc)
     auto* res = dlsym(_this->gl_config.dll_handle, proc);
     dbgln("GetProcAddress: {} -> {}", proc, res);
     return res;
+}
+
+int Serenity_GL_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context)
+{
+    if (!window || !context)
+        return 0;
+
+    auto platform_window = SerenityPlatformWindow::from_sdl_window(window);
+    GL::make_context_current(platform_window->widget()->m_gl_context);
+    return 0;
 }
 
 int Serenity_GL_SwapWindow(_THIS, SDL_Window* window)

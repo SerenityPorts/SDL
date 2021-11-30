@@ -79,6 +79,19 @@ private:
     NonnullRefPtr<SerenitySDLWidget> m_widget;
 };
 
+class SerenityGLContext final {
+public:
+    explicit SerenityGLContext(SDL_Window& sdl_window)
+        : m_sdl_window(sdl_window)
+    {
+    }
+
+    SDL_Window& sdl_window() const { return m_sdl_window; }
+
+private:
+    SDL_Window& m_sdl_window;
+};
+
 #endif /* SDL_serenityvideo_h_ */
 
 /* vi: set ts=4 sw=4 expandtab: */
