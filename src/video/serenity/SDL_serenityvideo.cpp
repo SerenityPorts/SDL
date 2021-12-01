@@ -708,7 +708,7 @@ int Serenity_GL_SwapWindow(_THIS, SDL_Window* window)
 {
     auto win = SerenityPlatformWindow::from_sdl_window(window);
     if (win->widget()->m_gl_context)
-        win->widget()->m_gl_context->present();
+        GL::present_context(win->widget()->m_gl_context);
 
     win->widget()->update();
     return 0;
