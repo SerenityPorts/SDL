@@ -710,7 +710,7 @@ int Serenity_GL_SwapWindow(_THIS, SDL_Window* window)
     if (win->widget()->m_gl_context)
         GL::present_context(win->widget()->m_gl_context);
 
-    win->widget()->update();
+    win->widget()->repaint();
     return 0;
 }
 
