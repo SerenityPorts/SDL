@@ -27,6 +27,7 @@
 
 #include "SDL_serenityvideo.h"
 #include "SDL_serenityevents_c.h"
+#include "SDL_timer.h"
 
 #include <LibCore/EventLoop.h>
 
@@ -36,7 +37,13 @@ SERENITY_PumpEvents(_THIS)
     auto& loop = Core::EventLoop::current();
     if (loop.was_exit_requested())
         exit(0);
-    loop.pump(Core::EventLoop::WaitMode::PollForEvents);
+
+    auto const event_loop_timeout_ms = SDL_GetTicks() + 100;
+    while (loop.pump(Core::EventLoop::WaitMode::PollForEvents) > 0) {
+        if (SDL_TICKS_PASSED(SDL_GetTicks(), event_loop_timeout_ms))
+            break;
+    }
+
 }
 
 
