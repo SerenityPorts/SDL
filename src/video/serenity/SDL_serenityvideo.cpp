@@ -41,6 +41,7 @@ extern "C" {
 #    include <LibCore/EventLoop.h>
 #    include <LibGfx/Bitmap.h>
 #    include <LibGUI/Application.h>
+#    include <LibGUI/Desktop.h>
 #    include <LibGUI/Painter.h>
 #    include <LibGUI/Widget.h>
 #    include <LibGUI/Window.h>
@@ -353,41 +354,32 @@ VideoBootStrap SERENITYVIDEO_bootstrap = { "serenity", "SDL serenity video drive
 
 static RefPtr<GUI::Application> g_app;
 
-// TODO: Ask kling about being able to query this from GWindow!
-struct ScreenMode {
-    int width;
-    int height;
-};
-
-static ScreenMode modes[] = {
-    { 640, 480 }, { 800, 600 }, { 1024, 768 }, { 1280, 1024 }, { 1920, 1080 }
-};
-
 int SERENITY_VideoInit(_THIS)
 {
     VERIFY(!g_app);
     g_app = GUI::Application::construct(0, nullptr);
     g_app->set_quit_when_last_window_deleted(false);
-    SDL_DisplayMode mode;
 
     dbgln("SDL2: Initialising SDL application");
 
     SERENITY_InitMouse(_this);
 
-    for (int i = 0; i < 5; i++) {
-        SDL_DisplayMode mode;
-        mode.format = SDL_PIXELFORMAT_RGB888;
-        mode.w = modes[i].width;
-        mode.h = modes[i].height;
-        mode.refresh_rate = 60;
-        mode.driverdata = nullptr;
+    // We only add the active desktop resolution until we properly support multiple
+    // fullscreen resolutions
+    auto desktop_rect = GUI::Desktop::the().rect();
 
-        if (SDL_AddBasicVideoDisplay(&mode) < 0) {
-            return -1;
-        }
+    SDL_DisplayMode mode;
+    mode.format = SDL_PIXELFORMAT_RGB888;
+    mode.w = desktop_rect.width();
+    mode.h = desktop_rect.height();
+    mode.refresh_rate = 60;
+    mode.driverdata = nullptr;
 
-        SDL_AddDisplayMode(&_this->displays[0], &mode);
+    if (SDL_AddBasicVideoDisplay(&mode) < 0) {
+        return -1;
     }
+
+    SDL_AddDisplayMode(&_this->displays[0], &mode);
 
     /* We're done! */
     return 0;
