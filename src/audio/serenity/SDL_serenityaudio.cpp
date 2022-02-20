@@ -62,9 +62,9 @@ static int SERENITYAUDIO_OpenDevice(_THIS, void*, const char*, int iscapture)
         return SDL_OutOfMemory();
     SDL_zerop(that->hidden);
 
-    int fd = open("/dev/audio", O_WRONLY);
+    int fd = open("/dev/audio/0", O_WRONLY);
     if (fd < 0)
-        return SDL_SetError("Unable to open /dev/audio");
+        return SDL_SetError("Unable to open /dev/audio/0");
     that->hidden->audio_fd = fd;
 
     that->spec.freq = 44100;
@@ -129,7 +129,7 @@ static int SERENITYAUDIO_Init(SDL_AudioDriverImpl* impl)
 }
 
 AudioBootStrap SERENITYAUDIO_bootstrap = {
-    "serenity", "Serenity using /dev/audio", SERENITYAUDIO_Init, 0
+    "serenity", "Serenity using /dev/audio/0", SERENITYAUDIO_Init, 0
 };
 
 #endif
