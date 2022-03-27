@@ -45,6 +45,7 @@ protected:
     void mousedown_event(GUI::MouseEvent&) override;
     void mousemove_event(GUI::MouseEvent&) override;
     void mouseup_event(GUI::MouseEvent&) override;
+    void mousewheel_event(GUI::MouseEvent&) override;
 
     void keydown_event(GUI::KeyEvent& event) override;
     void keyup_event(GUI::KeyEvent& event) override;

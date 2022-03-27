@@ -469,6 +469,12 @@ void SerenitySDLWidget::mouseup_event(GUI::MouseEvent& event)
     SDL_SendMouseButton(m_sdl_window, 0, SDL_RELEASED, map_button(event.button()));
 }
 
+void SerenitySDLWidget::mousewheel_event(GUI::MouseEvent& event)
+{
+    SDL_SendMouseMotion(m_sdl_window, 0, 0, event.x(), event.y());
+    SDL_SendMouseWheel(m_sdl_window, 0, (float)event.wheel_raw_delta_x(), -(float)event.wheel_raw_delta_y(), SDL_MOUSEWHEEL_NORMAL);
+}
+
 void SerenitySDLWidget::keydown_event(GUI::KeyEvent& event)
 {
     SDL_SendKeyboardKey(SDL_PRESSED, scancode_map[event.key()]);
