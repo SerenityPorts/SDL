@@ -437,15 +437,16 @@ void SerenitySDLWidget::hide_event(GUI::HideEvent&)
 static int map_button(GUI::MouseButton button)
 {
     switch (button) {
-    case GUI::MouseButton::None:
-        VERIFY(false);
-        break;
     case GUI::MouseButton::Primary:
         return SDL_BUTTON_LEFT;
     case GUI::MouseButton::Middle:
         return SDL_BUTTON_MIDDLE;
     case GUI::MouseButton::Secondary:
         return SDL_BUTTON_RIGHT;
+    case GUI::MouseButton::Forward:
+        return SDL_BUTTON_X1;
+    case GUI::MouseButton::Backward:
+        return SDL_BUTTON_X2;
     }
 
     VERIFY_NOT_REACHED();
