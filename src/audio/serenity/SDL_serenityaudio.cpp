@@ -25,47 +25,35 @@
 
 extern "C" {
 
-#    include <errno.h>
-#    include <fcntl.h>
-#    include <stdio.h>
-#    include <string.h>
-#    include <sys/stat.h>
-#    include <sys/time.h>
-#    include <unistd.h>
-
 #    include "SDL_audio.h"
 
 #    include "../SDL_audio_c.h"
 #    include "../SDL_audiodev_c.h"
-#    include "SDL_timer.h"
 }
 
+#    include <AK/Time.h>
+#    include <LibAudio/Buffer.h>
+#    include <LibAudio/ConnectionFromClient.h>
+#    include <LibAudio/SampleFormats.h>
+#    include <time.h>
 #    include "SDL_serenityaudio.h"
 
-static void SERENITYAUDIO_DetectDevices()
-{
-}
+static Array<Audio::Sample, Audio::AUDIO_BUFFER_SIZE> output_buffer {};
+static size_t output_buffer_samples_remaining { 0 };
 
 static void SERENITYAUDIO_CloseDevice(_THIS)
 {
-    if (that->hidden->audio_fd != -1)
-        close(that->hidden->audio_fd);
     SDL_free(that->hidden->mixbuf);
     SDL_free(that->hidden);
 }
 
-static int SERENITYAUDIO_OpenDevice(_THIS, void*, const char*, int iscapture)
+static int SERENITYAUDIO_OpenDevice(_THIS, void*, char const*, int iscapture)
 {
     /* Initialize all variables that we clean on shutdown */
-    that->hidden = (struct SDL_PrivateAudioData*)SDL_malloc((sizeof *that->hidden));
+    that->hidden = static_cast<struct SDL_PrivateAudioData*>(SDL_malloc(sizeof *that->hidden));
     if (!that->hidden)
         return SDL_OutOfMemory();
     SDL_zerop(that->hidden);
-
-    int fd = open("/dev/audio/0", O_WRONLY);
-    if (fd < 0)
-        return SDL_SetError("Unable to open /dev/audio/0");
-    that->hidden->audio_fd = fd;
 
     that->spec.freq = 44100;
     that->spec.format = AUDIO_S16LSB;
@@ -91,10 +79,59 @@ static int SERENITYAUDIO_OpenDevice(_THIS, void*, const char*, int iscapture)
 static void SERENITYAUDIO_PlayDevice(_THIS)
 {
     struct SDL_PrivateAudioData* h = that->hidden;
-    write(h->audio_fd, h->mixbuf, h->mixlen);
-#    ifdef DEBUG_AUDIO
-    fprintf(stderr, "Wrote %d bytes of audio data\n", h->mixlen);
-#    endif
+
+    // We need to create our audio connection and event loop here, in order to register them with SDL's audio thread
+    if (!h->event_loop)
+        h->event_loop = make<Core::EventLoop>(Core::EventLoop::MakeInspectable::No);
+    if (!h->client)
+        h->client = MUST(Audio::ConnectionFromClient::try_create());
+
+    h->client->async_start_playback();
+
+    auto convert_i16_to_double = [](i16 input) -> auto {
+        return (static_cast<double>(input) - NumericLimits<i16>::min()) / NumericLimits<u16>::max() * 2. - 1.;
+    };
+
+    auto const sleep_spec = Time::from_nanoseconds(100).to_timespec();
+    auto input_buffer = reinterpret_cast<i16*>(h->mixbuf);
+    auto input_samples = h->mixlen / that->spec.channels / sizeof(i16);
+    size_t input_position = 0;
+
+    while (input_samples > 0) {
+        // Fill up the output buffer
+        auto const input_samples_to_process = min(input_samples, Audio::AUDIO_BUFFER_SIZE - output_buffer_samples_remaining);
+        for (size_t i = 0; i < input_samples_to_process; ++i) {
+            auto left = convert_i16_to_double(input_buffer[input_position]);
+            auto right = convert_i16_to_double(input_buffer[input_position + 1]);
+            output_buffer[output_buffer_samples_remaining + i] = Audio::Sample(left, right);
+            input_position += 2;
+        }
+        output_buffer_samples_remaining += input_samples_to_process;
+        input_samples -= input_samples_to_process;
+
+        // Stop if we don't have enough samples to fill a buffer
+        if (output_buffer_samples_remaining < Audio::AUDIO_BUFFER_SIZE)
+            break;
+
+        // Try to enqueue our output buffer
+        for (;;) {
+            auto enqueue_result = h->client->realtime_enqueue(output_buffer);
+            if (!enqueue_result.is_error())
+                break;
+            if (enqueue_result.error() != Audio::AudioQueue::QueueStatus::Full)
+                return;
+
+            nanosleep(&sleep_spec, nullptr);
+        }
+        output_buffer_samples_remaining = 0;
+    }
+
+    // Pump our event loop - should just be the IPC call to start playback
+    for (;;) {
+        auto number_of_events_pumped = h->event_loop->pump(Core::EventLoop::WaitMode::PollForEvents);
+        if (number_of_events_pumped == 0)
+            break;
+    }
 }
 
 static Uint8* SERENITYAUDIO_GetDeviceBuf(_THIS)
@@ -102,34 +139,22 @@ static Uint8* SERENITYAUDIO_GetDeviceBuf(_THIS)
     return that->hidden->mixbuf;
 }
 
-static int SERENITYAUDIO_CaptureFromDevice(_THIS, void* buffer, int buflen)
-{
-    return -EIO;
-}
-
-static void SERENITYAUDIO_FlushCapture(_THIS)
-{
-}
-
 static int SERENITYAUDIO_Init(SDL_AudioDriverImpl* impl)
 {
     /* Set the function pointers */
-    impl->DetectDevices = SERENITYAUDIO_DetectDevices;
     impl->OpenDevice = SERENITYAUDIO_OpenDevice;
     impl->PlayDevice = SERENITYAUDIO_PlayDevice;
     impl->GetDeviceBuf = SERENITYAUDIO_GetDeviceBuf;
     impl->CloseDevice = SERENITYAUDIO_CloseDevice;
-    impl->CaptureFromDevice = SERENITYAUDIO_CaptureFromDevice;
-    impl->FlushCapture = SERENITYAUDIO_FlushCapture;
 
     impl->AllowsArbitraryDeviceNames = 1;
-    impl->HasCaptureSupport = SDL_TRUE;
+    impl->HasCaptureSupport = SDL_FALSE;
 
-    return 1; /* this audio target is available. */
+    return 1; // this audio target is available.
 }
 
 AudioBootStrap SERENITYAUDIO_bootstrap = {
-    "serenity", "Serenity using /dev/audio/0", SERENITYAUDIO_Init, 0
+    "serenity", "Serenity using AudioServer", SERENITYAUDIO_Init, 0
 };
 
 #endif
