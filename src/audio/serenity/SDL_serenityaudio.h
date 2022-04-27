@@ -23,11 +23,16 @@
 #pragma once
 
 #include "../SDL_sysaudio.h"
+#include <AK/OwnPtr.h>
+#include <AK/RefPtr.h>
+#include <LibAudio/ConnectionFromClient.h>
+#include <LibCore/EventLoop.h>
 
 #define _THIS SDL_AudioDevice* that
 
 struct SDL_PrivateAudioData {
-    int audio_fd { -1 };
+    RefPtr<Audio::ConnectionFromClient> client;
+    OwnPtr<Core::EventLoop> event_loop;
     Uint8* mixbuf { nullptr };
-    int mixlen { 0 };
+    size_t mixlen { 0 };
 };
