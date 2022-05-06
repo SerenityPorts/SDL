@@ -32,7 +32,6 @@ extern "C" {
 }
 
 #    include <AK/Time.h>
-#    include <LibAudio/Buffer.h>
 #    include <LibAudio/ConnectionFromClient.h>
 #    include <LibAudio/SampleFormats.h>
 #    include <time.h>
